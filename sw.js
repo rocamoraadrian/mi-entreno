@@ -4,8 +4,8 @@
  *   esas funciones necesitan Internet y la app lo indica.
  * - Los datos personales (fotos, registros) NO pasan por aquí: viven en IndexedDB del dispositivo.
  */
-const CACHE = 'mi-entreno-e2c2a90a31';
-const PRECACHE = ["./app-CSRYDZFE.js","./app-f4a3bdfa43.css","./chunk-2FULKXMP.js","./chunk-2XMNVLVU.js","./chunk-2YDI2BVZ.js","./chunk-42J6PPLC.js","./chunk-4BOBZ47E.js","./chunk-54BNICEA.js","./chunk-5HPLX3CI.js","./chunk-6272KX24.js","./chunk-7EMMDNUP.js","./chunk-7QNTALRM.js","./chunk-ARVH3PNS.js","./chunk-BB46IW5C.js","./chunk-CJ7GL32E.js","./chunk-DZOIN6NX.js","./chunk-EE3BSZIG.js","./chunk-FDEGVQBF.js","./chunk-G5TPTVHR.js","./chunk-GLWNXD7K.js","./chunk-HJKNZHZU.js","./chunk-I5G3HRTI.js","./chunk-IKN6NRHJ.js","./chunk-IMDHYXF7.js","./chunk-JLVPP43S.js","./chunk-K4QW252Y.js","./chunk-KWSSB25J.js","./chunk-M3ONQPBJ.js","./chunk-N4FYQQDX.js","./chunk-NQCH2QJB.js","./chunk-NRQ22CHF.js","./chunk-ODF3WHUC.js","./chunk-ORTHH264.js","./chunk-QUNDJNU2.js","./chunk-SWSFQNZE.js","./chunk-VQYSO53J.js","./chunk-WI5C7ETW.js","./chunk-WZ3FJYRQ.js","./chunk-XUMNDXL3.js","./chunk-XW7ZQFS6.js","./chunk-YEJHLY2X.js","./chunk-YXQ4Y6LX.js","./chunk-Z66UM5Y7.js","./pdf.worker-0613f41490.mjs","./apple-touch-icon.png","./favicon.svg","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./aperturas-polea.webp","./elevaciones-laterales-mancuernas.webp","./extension-triceps-polea-cuerda.webp","./press-banca-barra.webp","./press-inclinado-mancuernas.webp","./press-militar-mancuernas.webp","./index.html","./manifest.webmanifest"];
+const CACHE = 'mi-entreno-00c9c736ec';
+const PRECACHE = ["./app-4db18ae496.css","./app-O6VLGZ6K.js","./chunk-2B7EUTBZ.js","./chunk-2L4CXZA6.js","./chunk-3IW22EGL.js","./chunk-4BOBZ47E.js","./chunk-4IHXFETL.js","./chunk-5MMLKVTR.js","./chunk-6DCH5FTK.js","./chunk-7E6W6XGG.js","./chunk-7EMMDNUP.js","./chunk-7SWZNQIG.js","./chunk-7W76WBIP.js","./chunk-ALNZS4PM.js","./chunk-ANJS57KA.js","./chunk-CRIKM3ZT.js","./chunk-ELPNYZJP.js","./chunk-ENDBPOSJ.js","./chunk-FXE3TFCO.js","./chunk-G5TPTVHR.js","./chunk-GUC2MG4V.js","./chunk-H2YYUX3V.js","./chunk-HP7FCJBT.js","./chunk-I5G3HRTI.js","./chunk-IJHXCPOV.js","./chunk-IJWT6KI4.js","./chunk-JGDS6EXZ.js","./chunk-JPIUOYN2.js","./chunk-L575KC4S.js","./chunk-LJEUMWSZ.js","./chunk-M7L4MO2Y.js","./chunk-MGGY7B2Q.js","./chunk-MZ2FZRRO.js","./chunk-N4FYQQDX.js","./chunk-NYYOWJ5V.js","./chunk-O5YMJSEP.js","./chunk-OE47R5L2.js","./chunk-P7H76ZJU.js","./chunk-QIJ4WP2I.js","./chunk-QLFH2BR3.js","./chunk-SWSFQNZE.js","./chunk-V2NHPGSL.js","./chunk-V2ZRL3F4.js","./chunk-VNT3I7CM.js","./chunk-WCTAJ2J4.js","./chunk-WFSMM6EG.js","./chunk-YAAFK34H.js","./chunk-YYZXJG77.js","./chunk-Z66UM5Y7.js","./pdf.worker-0613f41490.mjs","./apple-touch-icon.png","./favicon.svg","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./aperturas-polea.webp","./elevaciones-laterales-mancuernas.webp","./extension-triceps-polea-cuerda.webp","./press-banca-barra.webp","./press-inclinado-mancuernas.webp","./press-militar-mancuernas.webp","./index.html","./manifest.webmanifest"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -46,13 +46,62 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Al pulsar la notificación del temporizador, enfocar la app
+// Al pulsar una notificación: abrir la app (en la pantalla del aviso si la trae)
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const hash = event.notification.data?.url || '';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      for (const c of list) { if ('focus' in c) return c.focus(); }
-      return self.clients.openWindow('./');
+      for (const c of list) {
+        if ('focus' in c) { if (hash && 'navigate' in c) c.navigate('./' + hash).catch(() => {}); return c.focus(); }
+      }
+      return self.clients.openWindow('./' + hash);
     })
   );
 });
+
+// ---------------- Recordatorios con la app cerrada ----------------
+// Tu servidor de Cloudflare envía un aviso SIN contenido a la hora exacta. El texto
+// (qué comida toca, etc.) se lee aquí, de los datos guardados en tu móvil.
+function idb() {
+  return new Promise((res, rej) => { const r = indexedDB.open('mi-entreno'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+}
+function kvGet(dbh, key) {
+  return new Promise((res) => {
+    try { const q = dbh.transaction('kv').objectStore('kv').get(key); q.onsuccess = () => res(q.result ? q.result.value : null); q.onerror = () => res(null); }
+    catch (e) { res(null); }
+  });
+}
+function kvSet(dbh, key, value) {
+  return new Promise((res) => {
+    try { const t = dbh.transaction('kv', 'readwrite'); t.objectStore('kv').put({ key, value, updatedAt: new Date().toISOString() }); t.oncomplete = () => res(); t.onerror = () => res(); }
+    catch (e) { res(); }
+  });
+}
+async function showDueReminders() {
+  const now = Date.now();
+  let dbh = null, items = [], shown = [], weekItems = [];
+  try {
+    dbh = await idb();
+    const st = (await kvGet(dbh, 'reminders')) || {};
+    items = st.items || [];
+    weekItems = st.week || [];
+    shown = (await kvGet(dbh, 'remindersShown')) || [];
+  } catch (e) { /* sin datos */ }
+  const seen = new Set(shown);
+  let due = items.filter((r) => r.at <= now + 90000 && r.at >= now - 20 * 60000 && !seen.has(r.id));
+  if (!due.length) {
+    // Si llevas días sin abrir la app, usa el aviso de tu semana tipo a esa misma hora
+    const week = 7 * 86400000;
+    due = weekItems.filter((r) => { const d = (((now - r.at) % week) + week) % week; return d < 90000 || d > week - 90000; })
+      .map((r) => ({ ...r, id: r.id + '|+' + Math.round(now / 60000) }))
+      .filter((r) => !seen.has(r.id));
+  }
+  if (!due.length) due = [{ id: 'generico|' + now, title: 'Mi Entreno', body: 'Tienes un recordatorio. Abre tu agenda para ver qué toca.', url: '#/agenda' }];
+  for (const r of due) {
+    await self.registration.showNotification(r.title, { body: r.body, tag: r.id, icon: './icon-192.png', badge: './icon-192.png', data: { url: r.url || '#/agenda' }, vibrate: [200, 100, 200] });
+    seen.add(r.id);
+  }
+  if (dbh) await kvSet(dbh, 'remindersShown', Array.from(seen).slice(-300));
+}
+self.addEventListener('push', (event) => { event.waitUntil(showDueReminders()); });
