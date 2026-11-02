@@ -4,8 +4,8 @@
  *   esas funciones necesitan Internet y la app lo indica.
  * - Los datos personales (fotos, registros) NO pasan por aquí: viven en IndexedDB del dispositivo.
  */
-const CACHE = 'mi-entreno-11802a7892';
-const PRECACHE = ["./app-SNHKBFRY.js","./app-ddade5eca3.css","./chunk-2B7EUTBZ.js","./chunk-3F75HWGC.js","./chunk-4BOBZ47E.js","./chunk-4LXMUIFE.js","./chunk-4SGYN5LD.js","./chunk-4T4LUVZH.js","./chunk-5WJLJ7XD.js","./chunk-64DSRSCQ.js","./chunk-73V46D3P.js","./chunk-7AZ4234U.js","./chunk-7EMMDNUP.js","./chunk-AGPDBGTE.js","./chunk-AISUFIPF.js","./chunk-D6NDCSSR.js","./chunk-DDBR6KCE.js","./chunk-DFUZTSA5.js","./chunk-E3PNSPW4.js","./chunk-FJFEMW23.js","./chunk-FNBIHK5Z.js","./chunk-G52WM7SM.js","./chunk-G5TPTVHR.js","./chunk-G7LQQT7S.js","./chunk-GN5YZPEZ.js","./chunk-HX5Y7ALH.js","./chunk-I5G3HRTI.js","./chunk-JVW3CJ77.js","./chunk-KHCUBCUC.js","./chunk-LDQG66DQ.js","./chunk-MBNZK3LB.js","./chunk-N4FYQQDX.js","./chunk-NY3P7UDL.js","./chunk-OP27MCUX.js","./chunk-OZ4IIYWU.js","./chunk-Q2VA5EBF.js","./chunk-QIFIGOWG.js","./chunk-QJT3ZUAA.js","./chunk-QZXTDUOA.js","./chunk-S2EIRISK.js","./chunk-SWSFQNZE.js","./chunk-T2IUEFV7.js","./chunk-U4GSYZNF.js","./chunk-V2ZRL3F4.js","./chunk-V7B6663G.js","./chunk-VIXMHH7J.js","./chunk-VMCWDIPN.js","./chunk-XIRWQ5MK.js","./chunk-YIGIFLCF.js","./pdf.worker-0613f41490.mjs","./apple-touch-icon.png","./favicon.svg","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./aperturas-polea.webp","./elevaciones-laterales-mancuernas.webp","./extension-triceps-polea-cuerda.webp","./press-banca-barra.webp","./press-inclinado-mancuernas.webp","./press-militar-mancuernas.webp","./index.html","./manifest.webmanifest"];
+const CACHE = 'mi-entreno-1745e9cf69';
+const PRECACHE = ["./app-5e705f543a.css","./app-IEV4I2KI.js","./chunk-2B7EUTBZ.js","./chunk-2JMJIYNB.js","./chunk-2KEEK7AO.js","./chunk-2RZECWRX.js","./chunk-4BOBZ47E.js","./chunk-4JFS4TJJ.js","./chunk-5WJLJ7XD.js","./chunk-65KDUOCO.js","./chunk-6EIUMZHI.js","./chunk-7EMMDNUP.js","./chunk-7RCCIU4Y.js","./chunk-ARFAXHLD.js","./chunk-B5FT6IF7.js","./chunk-CEXA7HWA.js","./chunk-DETNU3DC.js","./chunk-DKFSJEE7.js","./chunk-DMLC6CY2.js","./chunk-EBRGS7TZ.js","./chunk-EWJODJKX.js","./chunk-G5TPTVHR.js","./chunk-GDIA4Z5B.js","./chunk-HYPSJCBQ.js","./chunk-I5G3HRTI.js","./chunk-JCUC2SQB.js","./chunk-JPBSDQQX.js","./chunk-JWVQFHSV.js","./chunk-KJ7MD3ZD.js","./chunk-KJTH6GCU.js","./chunk-LDQG66DQ.js","./chunk-LUHKUKXN.js","./chunk-LWPX64D4.js","./chunk-N4FYQQDX.js","./chunk-NF4IF43Y.js","./chunk-NFZCE4VC.js","./chunk-O53C6L6P.js","./chunk-O6DP6HBZ.js","./chunk-OLASHHKV.js","./chunk-PKMPNMT5.js","./chunk-SHCLOXN4.js","./chunk-SNSALX2X.js","./chunk-SWSFQNZE.js","./chunk-T2727NBI.js","./chunk-TDGNYBMK.js","./chunk-UAROAEW5.js","./chunk-UXDSXBBO.js","./chunk-V2DWIN6N.js","./chunk-V2ZRL3F4.js","./chunk-VNIHAVYY.js","./chunk-XBNU4OD7.js","./chunk-ZGGV3VPO.js","./pdf.worker-0613f41490.mjs","./apple-touch-icon.png","./favicon.svg","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./aperturas-polea.webp","./elevaciones-laterales-mancuernas.webp","./extension-triceps-polea-cuerda.webp","./fondo-atleta.webp","./press-banca-barra.webp","./press-inclinado-mancuernas.webp","./press-militar-mancuernas.webp","./index.html","./manifest.webmanifest"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -89,7 +89,15 @@ async function showDueReminders() {
     shown = (await kvGet(dbh, 'remindersShown')) || [];
   } catch (e) { /* sin datos */ }
   const seen = new Set(shown);
-  let due = items.filter((r) => r.at <= now + 90000 && r.at >= now - 20 * 60000 && !seen.has(r.id));
+  const inWindow = items.filter((r) => r.at <= now + 90000 && r.at >= now - 20 * 60000);
+  let due = inWindow.filter((r) => !seen.has(r.id));
+  // Sin duplicados: si este aviso ya salió con la app abierta, Android exige mostrar algo al recibir
+  // el push; se vuelve a poner con la MISMA etiqueta y en silencio, así sustituye al anterior.
+  if (!due.length && inWindow.length) {
+    const r = inWindow[inWindow.length - 1];
+    await self.registration.showNotification(r.title, { body: r.body, tag: r.id, silent: true, icon: './icon-192.png', badge: './icon-192.png', data: { url: r.url || '#/agenda' } });
+    return;
+  }
   if (!due.length) {
     // Si llevas días sin abrir la app, usa el aviso de tu semana tipo a esa misma hora
     const week = 7 * 86400000;
