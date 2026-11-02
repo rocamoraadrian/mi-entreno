@@ -4,8 +4,8 @@
  *   esas funciones necesitan Internet y la app lo indica.
  * - Los datos personales (fotos, registros) NO pasan por aquí: viven en IndexedDB del dispositivo.
  */
-const CACHE = 'mi-entreno-1745e9cf69';
-const PRECACHE = ["./app-5e705f543a.css","./app-IEV4I2KI.js","./chunk-2B7EUTBZ.js","./chunk-2JMJIYNB.js","./chunk-2KEEK7AO.js","./chunk-2RZECWRX.js","./chunk-4BOBZ47E.js","./chunk-4JFS4TJJ.js","./chunk-5WJLJ7XD.js","./chunk-65KDUOCO.js","./chunk-6EIUMZHI.js","./chunk-7EMMDNUP.js","./chunk-7RCCIU4Y.js","./chunk-ARFAXHLD.js","./chunk-B5FT6IF7.js","./chunk-CEXA7HWA.js","./chunk-DETNU3DC.js","./chunk-DKFSJEE7.js","./chunk-DMLC6CY2.js","./chunk-EBRGS7TZ.js","./chunk-EWJODJKX.js","./chunk-G5TPTVHR.js","./chunk-GDIA4Z5B.js","./chunk-HYPSJCBQ.js","./chunk-I5G3HRTI.js","./chunk-JCUC2SQB.js","./chunk-JPBSDQQX.js","./chunk-JWVQFHSV.js","./chunk-KJ7MD3ZD.js","./chunk-KJTH6GCU.js","./chunk-LDQG66DQ.js","./chunk-LUHKUKXN.js","./chunk-LWPX64D4.js","./chunk-N4FYQQDX.js","./chunk-NF4IF43Y.js","./chunk-NFZCE4VC.js","./chunk-O53C6L6P.js","./chunk-O6DP6HBZ.js","./chunk-OLASHHKV.js","./chunk-PKMPNMT5.js","./chunk-SHCLOXN4.js","./chunk-SNSALX2X.js","./chunk-SWSFQNZE.js","./chunk-T2727NBI.js","./chunk-TDGNYBMK.js","./chunk-UAROAEW5.js","./chunk-UXDSXBBO.js","./chunk-V2DWIN6N.js","./chunk-V2ZRL3F4.js","./chunk-VNIHAVYY.js","./chunk-XBNU4OD7.js","./chunk-ZGGV3VPO.js","./pdf.worker-0613f41490.mjs","./apple-touch-icon.png","./favicon.svg","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./aperturas-polea.webp","./elevaciones-laterales-mancuernas.webp","./extension-triceps-polea-cuerda.webp","./fondo-atleta.webp","./press-banca-barra.webp","./press-inclinado-mancuernas.webp","./press-militar-mancuernas.webp","./index.html","./manifest.webmanifest"];
+const CACHE = 'mi-entreno-eb7e52963d';
+const PRECACHE = ["./app-46EFTJLX.js","./app-4ae58170ea.css","./chunk-2B7EUTBZ.js","./chunk-2JMJIYNB.js","./chunk-2KUU4OXT.js","./chunk-4BOBZ47E.js","./chunk-4DGJI54Y.js","./chunk-5O3DAZHY.js","./chunk-5WJLJ7XD.js","./chunk-7EMMDNUP.js","./chunk-7HBCWK7W.js","./chunk-7RRPUA3V.js","./chunk-7WWI7IKZ.js","./chunk-7X4RTOCY.js","./chunk-AFQQV5QD.js","./chunk-ATUGNP5V.js","./chunk-B7W5Q3DK.js","./chunk-CGASNTVY.js","./chunk-CIPDPZIF.js","./chunk-DFUTUGL2.js","./chunk-DHSWEMSV.js","./chunk-DMLC6CY2.js","./chunk-DPCQPIBU.js","./chunk-DSYTXOWY.js","./chunk-EVD3QQPP.js","./chunk-F3UPCSHC.js","./chunk-G5TPTVHR.js","./chunk-G6ZX4ZKD.js","./chunk-GCK7NCKG.js","./chunk-GNMYRD2S.js","./chunk-I5G3HRTI.js","./chunk-KCBHY7HR.js","./chunk-LDQG66DQ.js","./chunk-M35ALFNJ.js","./chunk-MBRGO6AB.js","./chunk-N2QAC3EK.js","./chunk-N4FYQQDX.js","./chunk-O53C6L6P.js","./chunk-O6DP6HBZ.js","./chunk-PDO5L6OO.js","./chunk-QVOZVBNH.js","./chunk-R3WHFXOT.js","./chunk-SNSALX2X.js","./chunk-SWSFQNZE.js","./chunk-UQN2YVMO.js","./chunk-V2ZRL3F4.js","./chunk-VCMTUFWH.js","./chunk-VNIHAVYY.js","./chunk-W65XDA6G.js","./chunk-WJ526X3U.js","./chunk-WNXAU7H4.js","./chunk-WSRSMQ5N.js","./chunk-WT74PGW2.js","./chunk-YLRZOOIE.js","./pdf.worker-0613f41490.mjs","./apple-touch-icon.png","./favicon.svg","./icon-192.png","./icon-512.png","./icon-maskable-512.png","./aperturas-polea.webp","./elevaciones-laterales-mancuernas.webp","./extension-triceps-polea-cuerda.webp","./fondo-atleta.webp","./press-banca-barra.webp","./press-inclinado-mancuernas.webp","./press-militar-mancuernas.webp","./index.html","./manifest.webmanifest"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -26,6 +26,20 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  // Entrenador con IA: el motor y el modelo de MediaPipe (de Google/jsDelivr) se guardan la primera vez
+  // en una caché propia, para que la función siga funcionando sin conexión. No incluye datos personales.
+  const isIA = (url.hostname === 'cdn.jsdelivr.net' && url.pathname.startsWith('/npm/@mediapipe/tasks-vision@')) ||
+    (url.hostname === 'storage.googleapis.com' && url.pathname.startsWith('/mediapipe-models/'));
+  if (isIA) {
+    event.respondWith(caches.open('ia-modelos-v1').then(async (c) => {
+      const hit = await c.match(req);
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res.ok) c.put(req, res.clone());
+      return res;
+    }));
+    return;
+  }
   if (url.origin !== self.location.origin) return; // terceros: red directa, sin caché
 
   // Navegación: index.html desde caché (app de una sola página)
